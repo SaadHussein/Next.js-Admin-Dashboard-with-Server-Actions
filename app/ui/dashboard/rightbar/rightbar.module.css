@@ -19,7 +19,7 @@
 }
 
 .bg {
-	object-fit: cover;
+	object-fit: contain;
 	opacity: 0.2;
 }
 
