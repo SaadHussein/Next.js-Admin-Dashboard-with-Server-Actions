@@ -11,7 +11,7 @@ const SingleProductPage = async ({ params }) => {
 			<div className={styles.infoContainer}>
 				<div className={styles.imgContainer}>
 					<Image
-						src={product?.img || "/noavatar.png"}
+						src={product?.img || "/noproduct.png"}
 						alt="Avatar Image"
 						fill
 					/>
