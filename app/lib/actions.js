@@ -5,14 +5,15 @@ import { Product, User } from "./models";
 import { connetToDB } from "./utils";
 import { redirect } from "next/navigation";
 import bcrypt from 'bcrypt';
+import { signIn } from "../auth";
 
 export const addUser = async (formData) => {
     const { username, email, password, phone, address, isAdmin, isActive } = Object.fromEntries(formData);
 
     try {
         await connetToDB();
-        const salt = bcrypt.genSalt(10);
-        const hashedPassword = bcrypt.hash(password, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
         const newUser = new User({ username, email, password: hashedPassword, phone, address, isAdmin, isActive });
 
         await newUser.save();
@@ -52,6 +53,7 @@ export const deleteUser = async (formData) => {
 
     revalidatePath('/dashboard/users');
 };
+
 export const deleteProduct = async (formData) => {
     const { id } = Object.fromEntries(formData);
 
@@ -63,4 +65,58 @@ export const deleteProduct = async (formData) => {
     }
 
     revalidatePath('/dashboard/products');
+};
+
+export const updateUser = async (formData) => {
+    const { id, username, email, password, phone, address, isAdmin, isActive } = Object.fromEntries(formData);
+
+    try {
+        await connetToDB();
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const updateFields = { username, email, password: hashedPassword, phone, address, isAdmin, isActive };
+
+        Object.keys(updateFields).forEach((key) => (updateFields[key] === "" || undefined) && delete updateFields[key]);
+
+        await User.findByIdAndUpdate(id, updateFields);
+    } catch (err) {
+        throw new Error('Failed While Update User.');
+    }
+
+    revalidatePath('/dashboard/users');
+    redirect('/dashboard/users');
+};
+
+export const updateProduct = async (formData) => {
+    const { id, title, price, stock, desc, color, size } = Object.fromEntries(formData);
+
+    try {
+        await connetToDB();
+
+        const updateFields = { id, title, price, stock, desc, color, size };
+
+        Object.keys(updateFields).forEach((key) => (updateFields[key] === "" || undefined) && delete updateFields[key]);
+
+        await Product.findByIdAndUpdate(id, updateFields);
+    } catch (err) {
+        throw new Error('Failed While Update Product.');
+    }
+
+    revalidatePath('/dashboard/products');
+    redirect('/dashboard/products');
+};
+
+export const authenticate = async (prevState, formData) => {
+    const { username, password } = Object.fromEntries(formData);
+
+    try {
+        await signIn("credentials", { username, password });
+    } catch (err) {
+        if (err.message.includes('CredentialsSignin')) {
+            return "Wrong Credentials.";
+        }
+
+        throw err;
+    }
 };
